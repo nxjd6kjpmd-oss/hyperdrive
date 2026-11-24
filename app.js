@@ -11,7 +11,7 @@ const GEN = [['A',1],['B',0],['C',8],['X',10],['Y',9],['Z',11],['Start',3],['Mod
 
 /* ---------------- settings ---------------- */
 const DEF = {shader:'sharp', integer:false, pad:'auto', region:'auto', sprites:false,
-  ffMode:'hold', ffSpeed:2, ffAudio:'mute', rewind:'std', audio:'normal', fps:false, opacity:.85, size:1, layout:{p:{},l:{}},
+  ffMode:'hold', ffSpeed:2, ffAudio:'mute', rewind:'std', chip:'mame (ym2612)', audio:'normal', fps:false, opacity:.85, size:1, layout:{p:{},l:{}},
   map:{1:2,0:0,8:1,10:4,9:3,11:5,3:9,2:8}, lockId:null};
 let S = {...DEF};
 try { const j = JSON.parse(localStorage.getItem('hd.settings') || '{}'); S = {...DEF, ...j, layout:{p:{},l:{},...(j.layout||{})}, map:{...DEF.map, ...(j.map||{})}}; } catch (e) {}
@@ -288,7 +288,8 @@ const coreOpts = () => ({
   genesis_plus_gx_system_hw: 'mega drive / genesis',
   genesis_plus_gx_region_detect: S.region,
   genesis_plus_gx_no_sprite_limit: S.sprites ? 'enabled' : 'disabled',
-  genesis_plus_gx_lock_on: Emu.lock ? 'sonic & knuckles' : 'disabled'
+  genesis_plus_gx_lock_on: Emu.lock ? 'sonic & knuckles' : 'disabled',
+  genesis_plus_gx_ym2612: S.chip
 });
 function mkdirp(FS, p) { let c = ''; for (const s of p.split('/').filter(Boolean)) { c += '/' + s; try { FS.mkdir(c); } catch (e) {} } }
 async function play(g, lock) {
@@ -678,9 +679,21 @@ function renderMap() {
   const m = $('#map'); if (!m) return;
   m.innerHTML = GEN.map(([n, i]) => `<button data-map="${i}" class="${waitMap === i ? 'wait' : ''}">${n}<span>${waitMap === i ? 'Press…' : GPN[S.map[i]] || '#' + S.map[i]}</span></button>`).join('');
 }
+const CHIPS = [
+  ['mame (ym2612)', 'Model 1 · YM2612', 'The original chip. Gritty, with buzz on quiet notes — what Sonic 1–3 were mixed for.'],
+  ['mame (asic ym3438)', 'Model 2 · YM3438', 'The later, cheaper chip. Cleaner, no buzz on quiet notes.'],
+  ['mame (enhanced ym3438)', 'Enhanced', 'An idealised chip that never shipped. The cleanest sound.'],
+  ['nuked (ym2612)', 'Accurate Model 1', 'Cycle-accurate YM2612. The most authentic Model 1.', 1],
+  ['nuked (ym3438)', 'Accurate Model 2', 'Cycle-accurate YM3438. The most authentic Model 2.', 1]
+];
+function chipHTML(inGame) {
+  return `<div class="sec">Sound chip</div><p class="sub" style="margin:2px 0 8px">Genesis models shipped with different FM chips. ${inGame ? 'Switches live.' : 'Applies to every game.'}</p>
+    <div class="list chips">${CHIPS.map(([v, n, d, heavy]) => `<button class="item" data-set="chip" data-v="${esc(v)}" aria-pressed="${S.chip === v}"><span class="dot"></span><span>${esc(n)}${heavy ? ' <i class="heavy">Heavy</i>' : ''}<small>${esc(d)}${heavy ? ' Much more work for the phone — may stutter on older iPhones. Use the speed meter to check.' : ''}</small></span></button>`).join('')}</div>`;
+}
 function systemHTML(inGame) {
   return `<div class="field"><div class="lb">Region<small>${inGame ? 'Changing it resets the console' : 'Auto reads the cartridge'}</small></div>${seg('region', [['auto', 'Auto'], ['ntsc-u', 'US'], ['ntsc-j', 'Japan'], ['pal', 'Europe']])}</div>
     <div class="field"><div class="lb">Remove sprite limit<small>Stops sprite flicker. A few games use the limit on purpose.</small></div>${tog('sprites')}</div>
+    ${chipHTML(inGame)}
     ${inGame ? `<div class="list" style="margin-top:12px">
       <button class="item" data-act="restart">${I.play}<span>Restart game<small>Reloads with all settings applied. Battery save is kept.</small></span></button>
       <button class="item" data-act="reset">${I.up}<span>Reset console<small>Like pressing the Reset button</small></span></button>
@@ -703,6 +716,7 @@ function bindSettings(el, inGame, rerender) {
       S[k] = v; saveS();
       if (k === 'shader') applyShader();
       if (k === 'ffSpeed') { Emu.M && Emu.fn.ffRatio(v); ffLabel(); }
+      if (k === 'chip') { if (Emu.M) Emu.fn.setVar('genesis_plus_gx_ym2612', v); if (CHIPS.find(c => c[0] === v)?.[3]) toast('Accurate chip on — watch for stutter'); }
       if (k === 'region' && Emu.M) { Emu.fn.setVar('genesis_plus_gx_region_detect', v); Emu.fn.restart(); toast('Console reset for new region'); }
       rerender();
     }
