@@ -11,7 +11,7 @@ const GEN = [['A',1],['B',0],['C',8],['X',10],['Y',9],['Z',11],['Start',3],['Mod
 
 /* ---------------- settings ---------------- */
 const DEF = {shader:'sharp', integer:false, pad:'auto', region:'auto', sprites:false,
-  ffMode:'hold', ffSpeed:2, ffAudio:'mute', rewind:'std', opacity:.85, size:1, layout:{p:{},l:{}},
+  ffMode:'hold', ffSpeed:2, ffAudio:'mute', rewind:'std', audio:'normal', fps:false, opacity:.85, size:1, layout:{p:{},l:{}},
   map:{1:2,0:0,8:1,10:4,9:3,11:5,3:9,2:8}, lockId:null};
 let S = {...DEF};
 try { const j = JSON.parse(localStorage.getItem('hd.settings') || '{}'); S = {...DEF, ...j, layout:{p:{},l:{},...(j.layout||{})}, map:{...DEF.map, ...(j.map||{})}}; } catch (e) {}
@@ -269,12 +269,12 @@ let wasmMod = null;
 const Emu = {M: null, g: null, lock: false, fn: {}, paused: false, ff: false, rw: false, sramSig: '', timer: 0, romPath: ''};
 const keyOf = () => Emu.g.id + (Emu.lock ? '-sk' : '');
 function cfgText() {
-  const rw = S.rewind === 'long' ? [60, 1] : [24, 2];
+  const rw = S.rewind === 'long' ? [64, 2] : S.rewind === 'off' ? [0, 0] : [32, 4];
   return [
     'savefile_directory = "/data/saves"', 'system_directory = "/system"', 'screenshot_directory = "/"', 'video_gpu_screenshot = false',
-    'audio_latency = 96', 'video_vsync = true', 'video_smooth = false', 'video_font_enable = false', 'input_joypad_driver = "null"',
+    `audio_latency = ${S.audio === 'stable' ? 192 : 128}`, 'video_vsync = true', 'video_smooth = false', 'video_font_enable = false', 'input_joypad_driver = "null"',
     'pause_nonactive = false', 'autosave_interval = 0', 'block_sram_overwrite = false', 'savestate_auto_save = false', 'savestate_auto_load = false',
-    `rewind_enable = true`, `rewind_buffer_size = "${rw[0]}"`, `rewind_granularity = "${rw[1]}"`,
+    `rewind_enable = ${S.rewind !== 'off'}`, ...(rw[0] ? [`rewind_buffer_size = "${rw[0]}"`, `rewind_granularity = "${rw[1]}"`] : []),
     `fastforward_ratio = "${S.ffSpeed}"`, `audio_fastforward_mute = ${S.ffAudio === 'mute'}`, `audio_fastforward_speedup = ${S.ffAudio === 'fast'}`,
     `video_scale_integer = ${!!S.integer}`, `input_libretro_device_p1 = "${S.pad === '6' ? 513 : S.pad === '3' ? 257 : 1}"`
   ].join('\n') + '\n';
@@ -342,6 +342,9 @@ async function play(g, lock) {
     requestAnimationFrame(layoutPad);
     g.played = Date.now(); g.lastLock = !!lock; DB.put('games', g.id, g);
     Emu.timer = setInterval(syncSram, 10000);
+    Emu.rwOff = S.rewind === 'off';
+    Emu.fpsFn = c('get_current_frame_count', 'number', []); Emu.fpsLast = [Emu.fpsFn(), performance.now()];
+    clearInterval(Emu.fpsT); Emu.fpsT = setInterval(fpsTick, 1000);
     toast(lock ? 'Locked onto Sonic & Knuckles' : 'Ready');
   } catch (e) {
     bootEl.innerHTML = `<div><p>${esc(e.message || e)}</p><button class="btn red" id="bootBack">Back to library</button></div>`;
@@ -371,7 +374,7 @@ async function grabShot() {
 }
 async function quit(force) {
   const M = Emu.M, g = Emu.g;
-  clearInterval(Emu.timer);
+  clearInterval(Emu.timer); clearInterval(Emu.fpsT); $('#fps').classList.add('hide');
   releaseAll();
   if (M && !force) {
     if (Emu.paused) { Emu.fn.loop(1); Emu.paused = false; await sleep(60); }
@@ -411,6 +414,18 @@ document.addEventListener('visibilitychange', () => {
 });
 window.addEventListener('pagehide', () => syncSram());
 
+function fpsTick() {
+  const el = $('#fps');
+  if (!Emu.M || !S.fps) { el.classList.add('hide'); return; }
+  try {
+    const f = Emu.fpsFn(), t = performance.now(), [f0, t0] = Emu.fpsLast; Emu.fpsLast = [f, t];
+    const v = Emu.paused ? 0 : (f - f0) * 1000 / (t - t0);
+    el.textContent = Emu.paused ? 'paused' : Math.round(v) + ' fps';
+    el.style.color = Emu.ff || v >= 58 ? '#5ed38a' : v >= 50 ? '#e9b949' : '#ff6b6b';
+    el.classList.remove('hide');
+  } catch (e) {}
+}
+
 /* ---------------- states ---------------- */
 async function saveState(slot) {
   if (!Emu.M) return;
@@ -438,7 +453,7 @@ async function loadState(slot) {
 
 /* ---------------- fast-forward / rewind ---------------- */
 function setFF(on) { if (!Emu.M || Emu.ff === on) return; Emu.ff = on; Emu.fn.ff(on ? 1 : 0); $('#bFf').classList.toggle('on', on); }
-function setRW(on) { if (!Emu.M || Emu.rw === on) return; Emu.rw = on; Emu.fn.rewind(on ? 1 : 0); $('#rw').classList.toggle('on', on); $('#bRw').classList.toggle('on', on); }
+function setRW(on) { if (!Emu.M || Emu.rw === on) return; if (on && Emu.rwOff) { toast('Rewind is off (Settings → Controls)'); return; } Emu.rw = on; Emu.fn.rewind(on ? 1 : 0); $('#rw').classList.toggle('on', on); $('#bRw').classList.toggle('on', on); }
 const ffLabel = () => { $('#ffx').textContent = S.ffSpeed + '×'; };
 ffLabel();
 function holdBtn(el, down, up) {
@@ -645,7 +660,10 @@ function controlsHTML(inGame) {
     <div class="field"><div class="lb">Fast-forward button</div>${seg('ffMode', [['hold', 'Hold'], ['toggle', 'Toggle']])}</div>
     <div class="field"><div class="lb">Fast-forward speed</div>${seg('ffSpeed', [[2, '2×'], [4, '4×'], [8, '8×']])}</div>
     <div class="field"><div class="lb">Sound while fast</div>${seg('ffAudio', [['mute', 'Mute'], ['fast', 'Sped up']])}</div>
-    <div class="field"><div class="lb">Rewind length<small>Extended uses more memory. ${inGame ? 'Applies on restart' : ''}</small></div>${seg('rewind', [['std', 'Standard'], ['long', 'Extended']])}</div>
+    <div class="sec">Performance</div>
+    <div class="field"><div class="lb">Rewind<small>Rewind saves snapshots as you play, which costs speed on older phones. Off is smoothest. ${inGame ? 'Applies on restart' : ''}</small></div>${seg('rewind', [['off', 'Off'], ['std', 'Standard'], ['long', 'Extended']])}</div>
+    <div class="field"><div class="lb">Audio buffer<small>Stable trades a little sound delay for fewer crackles and hitches. ${inGame ? 'Applies on restart' : ''}</small></div>${seg('audio', [['normal', 'Normal'], ['stable', 'Stable']])}</div>
+    <div class="field"><div class="lb">Show speed meter<small>Frames per second, bottom-left of the screen. 60 is full speed.</small></div>${tog('fps')}</div>
     <div class="sec">Gamepad (Xbox layout) — tap a button, then press it on the controller</div>
     <div class="map" id="map"></div>
     <p class="sub" style="margin-top:10px">LT hold = rewind · RT = fast-forward · View + Start = menu · View + RB = quick save · View + LB = quick load. View alone is Mode.<br>Keyboard: WASD/arrows, J K L = A B C, U I O = X Y Z, Enter = Start, M = Mode, Space = fast-forward, Backspace = rewind, F2/F4 = quick save/load, Esc = menu.</p>`;
