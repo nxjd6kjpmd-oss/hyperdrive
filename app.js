@@ -606,6 +606,16 @@ function pollPads() {
 requestAnimationFrame(pollPads);
 addEventListener('gamepaddisconnected', () => { releaseAll('g'); pad.classList.remove('gp'); $('#play').classList.remove('gpm'); });
 
+/* ---------------- no accidental zoom (iOS ignores user-scalable=no) ---------------- */
+['gesturestart', 'gesturechange'].forEach(t => document.addEventListener(t, e => e.preventDefault(), {passive: false}));
+document.addEventListener('dblclick', e => e.preventDefault(), {passive: false});
+let lastTouchEnd = 0;
+document.addEventListener('touchend', e => {
+  const now = Date.now();
+  if (now - lastTouchEnd < 350 && !e.target.closest('input,select,textarea,label')) e.preventDefault();
+  lastTouchEnd = now;
+}, {passive: false});
+
 /* ---------------- toast ---------------- */
 let toastT = 0;
 function toast(m) {
