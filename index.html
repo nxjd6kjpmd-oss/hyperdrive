@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>Hyperdrive</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="icon" href="icons/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Hyperdrive">
+<meta name="theme-color" content="#0c0c0e">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=Russo+One&display=swap" rel="stylesheet">
+<style>
+/*
+VOICE: a piece of console hardware you own — confident, tactile, a little loud like early-90s Sega.
+IDEA: the Genesis itself: black ribbed plastic, cartridges you slot in, the red/gold "16-BIT" livery.
+PICTURE: a shelf of generated cartridges (label = last screenshot or a colour plate), and a pad that looks like a 6-button controller.
+COLOUR and TYPE: plastic black #0c0c0e, slot grey, signal red #ff2b2b, livery gold #e9b949; Russo One for the wordmark, Chakra Petch for everything else.
+LAYOUT: library = wordmark bar, continue strip, cartridge grid. Play = screen on top and pad below in portrait; full-bleed screen with side overlays in landscape.
+*/
+:root{color-scheme:dark;--bg:#0c0c0e;--plastic:#17171a;--plastic2:#1f1f23;--edge:#2c2c31;--ink:#f1f0ec;--dim:#9c9aa3;--red:#ff2b2b;--gold:#e9b949;--ok:#5ed38a;
+--sat:env(safe-area-inset-top);--sab:env(safe-area-inset-bottom);--sal:env(safe-area-inset-left);--sar:env(safe-area-inset-right)}
+:root[data-theme=light]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 "Chakra Petch",system-ui,sans-serif;overflow-x:clip;-webkit-user-select:none;user-select:none}
+button,select,input{font:inherit;color:inherit}
+button{cursor:pointer;border:0;background:none;padding:0}
+:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.hide{display:none!important}
+
+/* ---------- library ---------- */
+#lib{min-height:100%;padding:calc(var(--sat) + 10px) max(16px,var(--sar)) calc(var(--sab) + 40px) max(16px,var(--sal));
+background:repeating-linear-gradient(0deg,transparent 0 5px,rgba(255,255,255,.018) 5px 6px),radial-gradient(120% 60% at 50% -10%,#24242a 0,var(--bg) 60%)}
+.bar{display:flex;align-items:center;gap:10px;max-width:1240px;margin:0 auto;padding:8px 0 18px}
+.mark{display:flex;align-items:center;gap:10px;margin-right:auto;overflow:hidden}
+.mark svg{width:44px;height:28px}
+.mark b{font:400 clamp(20px,5.2vw,34px)/1 "Russo One",sans-serif;letter-spacing:.02em;background:linear-gradient(#fff 0 48%,#c9c9cf 52% 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.mark small{display:block;font-size:12px;color:var(--gold);font-weight:600;margin-top:2px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:0 16px;border-radius:12px;background:var(--plastic2);border:1px solid var(--edge);font-weight:600;white-space:nowrap}
+.btn.red{background:var(--red);border-color:#ff5c5c;color:#fff;box-shadow:0 4px 0 #9d1414}
+.btn.red:active{transform:translateY(2px);box-shadow:0 2px 0 #9d1414}
+.btn.ghost{background:transparent}
+.btn svg{width:20px;height:20px}
+.icon{width:44px;padding:0}
+.wrap{max-width:1240px;margin:0 auto}
+
+.cont{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:20px;align-items:center;margin-bottom:28px;padding:18px;border-radius:20px;
+background:linear-gradient(135deg,#1c1c20,#121214);border:1px solid var(--edge);position:relative;overflow:hidden}
+.cont::after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(115deg,transparent 0 22px,rgba(255,43,43,.06) 22px 26px);pointer-events:none;mask:linear-gradient(90deg,transparent 40%,#000)}
+@media(max-width:600px){.cont{grid-template-columns:minmax(0,1fr)}.mark small{display:none}}
+.cont .shot{aspect-ratio:4/3;border-radius:10px;overflow:hidden;background:#000;border:3px solid #050506;box-shadow:0 10px 30px rgba(0,0,0,.6)}
+.cont .shot img{width:100%;height:100%;object-fit:cover;image-rendering:pixelated;display:block}
+.cont h2{font-size:clamp(24px,4vw,34px);line-height:1.05;margin:4px 0 6px;text-wrap:balance}
+.cont p{margin:0 0 16px;color:var(--dim)}
+.eyebrow{font-size:13px;color:var(--gold);font-weight:600}
+.row{display:flex;flex-wrap:wrap;gap:10px;position:relative;z-index:1}
+
+.shelf-h{display:flex;align-items:baseline;gap:12px;margin:0 0 12px}
+.shelf-h h3{margin:0;font-size:20px}
+.shelf-h span{color:var(--dim);font-size:14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:22px 16px}
+.cart{position:relative;text-align:left;display:block;width:100%;filter:drop-shadow(0 8px 10px rgba(0,0,0,.55));transition:transform .15s}
+.cart:active{transform:scale(.97)}
+.shell{position:relative;aspect-ratio:.78;border-radius:10px 10px 6px 6px;background:linear-gradient(90deg,#141416,#26262a 12%,#1b1b1e 50%,#26262a 88%,#141416);padding:20% 9% 10%;
+clip-path:polygon(0 6%,6% 0,94% 0,100% 6%,100% 100%,0 100%)}
+.shell::before{content:"";position:absolute;left:9%;right:9%;top:5%;height:9%;background:repeating-linear-gradient(90deg,#0d0d0f 0 3px,#2d2d32 3px 6px);border-radius:2px}
+.label{height:100%;border-radius:4px;overflow:hidden;position:relative;display:flex;flex-direction:column;background:var(--lc,#333)}
+.label .art{flex:1;background:#000 center/cover no-repeat;image-rendering:pixelated;position:relative}
+.label .art.gen{background:radial-gradient(80% 60% at 70% 30%,rgba(255,255,255,.35),transparent 60%),repeating-linear-gradient(135deg,rgba(0,0,0,.12) 0 8px,transparent 8px 16px),var(--lc)}
+.label .art.gen b{position:absolute;left:8px;bottom:6px;right:8px;font:400 18px/1 "Russo One";color:rgba(255,255,255,.9);text-shadow:0 2px 0 rgba(0,0,0,.35);overflow-wrap:anywhere}
+.label .strip{background:#0b0b0c;padding:6px 7px 7px;display:flex;flex-direction:column;gap:3px}
+.label .t{font-weight:700;font-size:13px;line-height:1.15;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;color:#fff}
+.label .m{display:flex;gap:5px;align-items:center;font-size:11px;color:var(--dim)}
+.label .m i{font-style:normal;padding:0 5px;border-radius:4px;background:#26262a;color:#ddd;font-weight:600}
+.label .m i.lk{background:var(--gold);color:#1b1404}
+.label .m i.s3{background:var(--red);color:#fff}
+.more{position:absolute;right:4px;top:4px;width:36px;height:36px;border-radius:10px;background:rgba(12,12,14,.8);display:grid;place-items:center;z-index:2}
+.more svg{width:18px;height:18px}
+
+.empty{display:grid;place-items:center;text-align:center;padding:30px 0 10px}
+.empty svg{width:min(340px,80vw);height:auto}
+.empty h2{font-size:clamp(26px,5vw,36px);line-height:1.05;margin:16px 0 8px}
+.empty p{color:var(--dim);max-width:46ch;margin:0 auto 18px}
+.note{color:var(--dim);font-size:13px;margin-top:26px;text-align:center}
+.note a{color:var(--dim)}
+
+/* ---------- sheets ---------- */
+.scrim{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:50;display:flex;align-items:flex-end;justify-content:center;-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}
+.sheet{width:min(640px,100%);max-height:min(88vh,100%);overflow:auto;background:var(--plastic);border:1px solid var(--edge);border-bottom:0;border-radius:20px 20px 0 0;padding:8px 18px calc(18px + var(--sab));
+box-shadow:0 -20px 50px rgba(0,0,0,.5);animation:up .22s ease-out}
+@media(min-width:700px) and (min-height:560px){.scrim{align-items:center}.sheet{border-radius:20px;border-bottom:1px solid var(--edge)}}
+@keyframes up{from{transform:translateY(30px);opacity:0}}
+@media(prefers-reduced-motion:reduce){.sheet{animation:none}.cart{transition:none}}
+.grab{width:40px;height:5px;border-radius:3px;background:#3a3a40;margin:4px auto 10px}
+.sheet h3{margin:0 0 4px;font-size:22px;line-height:1.1}
+.sheet .sub{color:var(--dim);font-size:14px;margin:0 0 14px}
+.list{display:flex;flex-direction:column;gap:6px}
+.item{display:flex;align-items:center;gap:12px;min-height:50px;padding:0 14px;border-radius:12px;background:var(--plastic2);border:1px solid var(--edge);text-align:left;font-weight:600;width:100%}
+.item svg{width:20px;height:20px;flex:none;color:var(--gold)}
+.item.danger{color:#ff7b7b}.item.danger svg{color:#ff7b7b}
+.item small{display:block;font-weight:400;color:var(--dim);font-size:13px}
+.tabs{display:flex;gap:4px;padding:4px;border-radius:12px;background:#0f0f11;margin:4px 0 14px;overflow-x:auto}
+.tabs button{flex:1;min-height:40px;border-radius:9px;font-weight:600;color:var(--dim);padding:0 10px;white-space:nowrap}
+.tabs button[aria-selected=true]{background:var(--plastic2);color:var(--ink);box-shadow:inset 0 -2px 0 var(--red)}
+.field{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 12px;padding:10px 0;border-bottom:1px solid #26262b}
+.field:last-child{border-bottom:0}
+.field label,.field .lb{font-weight:600;flex:1 1 170px}
+.field .lb small,.field label small{display:block;font-weight:400;color:var(--dim);font-size:13px}
+.seg{display:inline-flex;border-radius:10px;background:#0f0f11;padding:3px;gap:2px;flex-wrap:wrap;justify-content:flex-end}
+.seg button{min-height:38px;padding:0 11px;border-radius:8px;font-weight:600;font-size:14px;color:var(--dim)}
+.seg button[aria-pressed=true]{background:var(--red);color:#fff}
+input[type=range]{width:150px;accent-color:var(--red);min-height:38px}
+.tog{width:52px;height:30px;border-radius:15px;background:#34343a;position:relative;flex:none}
+.tog::after{content:"";position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#fff;transition:left .15s}
+.tog[aria-checked=true]{background:var(--red)}.tog[aria-checked=true]::after{left:25px}
+.sec{font-size:13px;color:var(--gold);font-weight:600;margin:16px 0 2px}
+.slots{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+@media(min-width:520px){.slots{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.slot{border-radius:12px;background:var(--plastic2);border:1px solid var(--edge);overflow:hidden;display:flex;flex-direction:column}
+.slot .th{aspect-ratio:4/3;background:#000 center/cover;image-rendering:pixelated;display:grid;place-items:center;color:#55555c;font-size:13px}
+.slot .in{padding:6px 8px 8px}
+.slot .in b{font-size:14px}.slot .in span{display:block;font-size:12px;color:var(--dim);min-height:18px}
+.slot .acts{display:flex;gap:6px;margin-top:6px}
+.slot .acts button{flex:1;min-height:36px;border-radius:8px;background:#0f0f11;font-weight:600;font-size:14px}
+.slot .acts button:disabled{opacity:.35}
+.slot .acts button.sv{background:#3a1616;color:#ffb3b3}
+.txt{width:100%;min-height:48px;border-radius:12px;background:#0f0f11;border:1px solid var(--edge);padding:0 14px;font-size:16px}
+.map{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px}
+.map button{min-height:48px;border-radius:10px;background:var(--plastic2);border:1px solid var(--edge);display:flex;justify-content:space-between;align-items:center;padding:0 12px;font-weight:600}
+.map button span{color:var(--dim);font-weight:500;font-size:13px}
+.map button.wait{border-color:var(--red);color:var(--red)}
+
+/* ---------- play ---------- */
+#play{position:fixed;inset:0;background:#000;display:grid;grid-template-rows:auto minmax(0,auto) minmax(0,1fr);z-index:10;touch-action:none;overflow:hidden}
+#top{display:flex;align-items:center;gap:6px;padding:calc(var(--sat) + 6px) max(10px,var(--sar)) 6px max(10px,var(--sal));background:linear-gradient(#141416,#0c0c0e);border-bottom:1px solid #222}
+#top .ttl{flex:1;font-weight:600;font-size:14px;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 4px}
+.tb{width:44px;height:40px;border-radius:10px;display:grid;place-items:center;background:#1d1d21;border:1px solid #2a2a2f;position:relative}
+.tb svg{width:20px;height:20px}
+.tb.on{background:var(--red);border-color:#ff5c5c}
+.tb em{position:absolute;bottom:-2px;right:2px;font:700 10px/1 "Chakra Petch";font-style:normal;color:var(--gold)}
+#screen{position:relative;width:100%;aspect-ratio:4/3;max-height:62vh;margin:0 auto;background:#000}
+#screen canvas{position:absolute;inset:0;width:100%;height:100%;display:block;image-rendering:pixelated}
+#boot{position:absolute;inset:0;display:grid;place-items:center;color:var(--dim);font-weight:600;text-align:center;padding:20px}
+#toast{position:absolute;left:50%;top:12px;transform:translateX(-50%);background:rgba(12,12,14,.88);border:1px solid #333;padding:6px 14px;border-radius:20px;font-weight:600;font-size:14px;pointer-events:none;opacity:0;transition:opacity .2s;white-space:nowrap;z-index:5}
+#toast.on{opacity:1}
+#rw{position:absolute;inset:0;pointer-events:none;box-shadow:inset 0 0 0 3px var(--gold);opacity:0}
+#rw.on{opacity:1}
+
+/* pad body (portrait) */
+#pad{position:relative;background:repeating-linear-gradient(0deg,#101012 0 4px,#151518 4px 6px);border-top:1px solid #2a2a2f;
+--ps:1;--po:1;padding-bottom:var(--sab)}
+.ctl{position:absolute;opacity:var(--po);touch-action:none}
+.ctl.edit{outline:2px dashed var(--gold);outline-offset:6px;opacity:1}
+#dpad{width:calc(150px*var(--ps));height:calc(150px*var(--ps))}
+#dpad .base{position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle,#2a2a2f 0 38%,#1a1a1d 39% 100%);box-shadow:inset 0 2px 0 #333,0 6px 14px rgba(0,0,0,.6)}
+#dpad .cross{position:absolute;inset:14%;}
+#dpad .cross i{position:absolute;background:linear-gradient(#2b2b30,#19191c);border-radius:6px;box-shadow:inset 0 1px 0 #3d3d44}
+#dpad .cross i:nth-child(1){left:34%;right:34%;top:0;bottom:0}
+#dpad .cross i:nth-child(2){top:34%;bottom:34%;left:0;right:0}
+#dpad .cross b{position:absolute;width:0;height:0;border:calc(7px*var(--ps)) solid transparent;opacity:.55}
+#dpad .cross b.u{left:50%;top:6%;transform:translateX(-50%);border-bottom-color:#aaa;border-top:0}
+#dpad .cross b.d{left:50%;bottom:6%;transform:translateX(-50%);border-top-color:#aaa;border-bottom:0}
+#dpad .cross b.l{top:50%;left:6%;transform:translateY(-50%);border-right-color:#aaa;border-left:0}
+#dpad .cross b.r{top:50%;right:6%;transform:translateY(-50%);border-left-color:#aaa;border-right:0}
+#dpad[data-dir] .cross{filter:brightness(1.25)}
+#face{width:calc(210px*var(--ps));height:calc(150px*var(--ps))}
+.fb{position:absolute;border-radius:50%;display:grid;place-items:center;font:400 calc(18px*var(--ps))/1 "Russo One";color:#f4f4f4;
+background:radial-gradient(circle at 40% 30%,#3a3a40,#16161a 70%);box-shadow:inset 0 -3px 0 rgba(0,0,0,.6),0 4px 8px rgba(0,0,0,.6),0 0 0 2px #0a0a0b}
+.fb.big{width:calc(56px*var(--ps));height:calc(56px*var(--ps))}
+.fb.sm{width:calc(40px*var(--ps));height:calc(40px*var(--ps));font-size:calc(14px*var(--ps));color:#cfcfd4}
+.fb.on,.pill.on{filter:brightness(1.6);transform:scale(.94)}
+.fb.big span{color:var(--red)}
+#center{display:flex;gap:calc(14px*var(--ps))}
+.pill{min-width:calc(66px*var(--ps));height:calc(30px*var(--ps));border-radius:15px;background:#26262b;box-shadow:inset 0 -2px 0 #111,0 3px 6px rgba(0,0,0,.5);font-weight:700;font-size:calc(12px*var(--ps));color:#ccc;display:grid;place-items:center;padding:0 10px}
+#pad.gp .ctl{display:none}
+#play.gpm #screen{max-height:calc(100vh - 70px)}
+#editbar{position:absolute;left:50%;top:8px;transform:translateX(-50%);display:flex;gap:8px;z-index:6}
+
+/* landscape: screen fills, pad floats */
+@media (orientation:landscape){
+  #play{grid-template-rows:minmax(0,1fr);grid-template-columns:minmax(0,1fr)}
+  #top{position:absolute;top:0;left:0;right:0;z-index:4;background:linear-gradient(rgba(0,0,0,.7),transparent);border:0;opacity:var(--topop,.85)}
+  #top .ttl{display:none}
+  #screen{grid-row:1;grid-column:1;max-height:100%;width:min(100%,calc(100vh * 4 / 3));height:auto;aspect-ratio:4/3;align-self:center;justify-self:center}
+  #play.gpm #screen{max-height:none}
+  #pad{grid-row:1;grid-column:1;background:none;border:0;pointer-events:none}
+  #pad .ctl{pointer-events:auto}
+}
+</style>
+</head>
+<body>
+
+<main id="lib">
+  <header class="bar">
+    <div class="mark" aria-label="Hyperdrive">
+      <svg viewBox="0 0 44 28" aria-hidden="true"><path d="M2 22h14M6 16h14M10 10h14" stroke="#ff2b2b" stroke-width="3.5" stroke-linecap="round"/><path d="M22 4h18l-6 20H16z" fill="#e9b949"/><path d="M26 9h9l-3 10h-9z" fill="#0c0c0e"/></svg>
+      <div><b>HYPERDRIVE</b><small>Genesis · Mega Drive</small></div>
+    </div>
+    <button class="btn ghost icon" id="setBtn" aria-label="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
+    <label class="btn red" for="pick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>Add ROMs</label>
+    <input type="file" id="pick" multiple accept=".md,.bin,.gen,.smd,.68k,.zip" class="hide">
+  </header>
+  <div class="wrap" id="libBody"></div>
+  <p class="note wrap">ROMs, saves and states stay in this browser on this device. Emulation by Genesis Plus GX (non-commercial licence) · <a href="core/license.txt">licence</a></p>
+</main>
+
+<section id="play" class="hide" aria-label="Game">
+  <div id="top">
+    <button class="tb" id="bMenu" aria-label="Menu"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+    <div class="ttl" id="ttl"></div>
+    <button class="tb" id="bRw" aria-label="Hold to rewind"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M11 6v12L2 12zM21 6v12l-9-6z"/></svg></button>
+    <button class="tb" id="bFf" aria-label="Fast-forward"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 6v12l9-6zM3 6v12l9-6z"/></svg><em id="ffx">2×</em></button>
+    <button class="tb" id="bQs" aria-label="Quick save"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3h11l3 3v15H5z"/><path d="M8 3v5h7V3M8 21v-7h8v7"/></svg></button>
+    <button class="tb" id="bQl" aria-label="Quick load"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg></button>
+  </div>
+  <div id="screen"><div id="boot">Slotting cartridge…</div><div id="rw"></div><div id="toast"></div></div>
+  <div id="pad">
+    <div class="ctl" id="dpad" data-k="dpad"><div class="base"></div><div class="cross"><i></i><i></i><b class="u"></b><b class="d"></b><b class="l"></b><b class="r"></b></div></div>
+    <div class="ctl" id="face" data-k="face">
+      <button class="fb sm" data-b="10" style="left:0;top:0">X</button>
+      <button class="fb sm" data-b="9" style="left:calc(74px*var(--ps));top:calc(-8px*var(--ps))">Y</button>
+      <button class="fb sm" data-b="11" style="left:calc(148px*var(--ps));top:calc(-16px*var(--ps))">Z</button>
+      <button class="fb big" data-b="1" style="left:calc(-8px*var(--ps));top:calc(62px*var(--ps))"><span>A</span></button>
+      <button class="fb big" data-b="0" style="left:calc(66px*var(--ps));top:calc(54px*var(--ps))"><span>B</span></button>
+      <button class="fb big" data-b="8" style="left:calc(140px*var(--ps));top:calc(46px*var(--ps))"><span>C</span></button>
+    </div>
+    <div class="ctl" id="center" data-k="center"><button class="pill" data-b="2" id="modeBtn">MODE</button><button class="pill" data-b="3">START</button></div>
+    <div id="editbar" class="hide"><button class="btn red" id="editDone">Done</button><button class="btn" id="editReset">Reset layout</button></div>
+  </div>
+</section>
+
+<div id="sheetHost"></div>
+
+<script src="core/genesis_plus_gx_libretro.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
