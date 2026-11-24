@@ -265,6 +265,11 @@ async function gameSheet(g) {
 }
 
 /* ---------------- emulator ---------------- */
+const BOOT_LOGO = `<svg class="bl" viewBox="0 0 100 100" aria-hidden="true"><rect width="100" height="100" rx="22" fill="url(#hdRibs)"/>
+<g class="h"><g transform="translate(52 50) skewX(-12) translate(-50 -50)"><path d="M29 22h17v23h12V22h17v56H58V57H46v21H29z" fill="#ff2b2b"/><path d="M29 22h17v2.5H29zM58 22h17v2.5H58z" fill="#ff7070"/>
+<rect x="20" y="58.5" width="62" height="2" fill="#121214"/><rect x="20" y="64.5" width="62" height="3" fill="#121214"/><rect x="20" y="71.5" width="62" height="4" fill="#121214"/></g></g>
+<g class="tr" fill="#ff2b2b"><rect x="8" y="61" width="14" height="3" rx="1.5"/><rect x="4" y="68" width="16" height="3.5" rx="1.75"/><rect x="10" y="75.5" width="9" height="2.5" rx="1.25"/></g></svg>`;
+const bootMsg = m => { const p = $('#bootMsg'); if (p) p.textContent = m; };
 let wasmMod = null;
 const Emu = {M: null, g: null, lock: false, fn: {}, paused: false, ff: false, rw: false, sramSig: '', timer: 0, romPath: ''};
 const keyOf = () => Emu.g.id + (Emu.lock ? '-sk' : '');
@@ -291,7 +296,7 @@ async function play(g, lock) {
   closeSheet(true);
   $('#lib').classList.add('hide'); $('#play').classList.remove('hide');
   $('#ttl').textContent = g.name + (lock ? ' + S&K' : '');
-  const bootEl = $('#boot'); bootEl.classList.remove('hide'); bootEl.textContent = 'Slotting cartridge…';
+  const bootEl = $('#boot'); bootEl.classList.remove('hide'); bootEl.innerHTML = BOOT_LOGO + '<p id="bootMsg">Slotting cartridge…</p>';
   Emu.g = g; Emu.lock = !!lock; Emu.paused = false;
   layoutPad();
   try {
@@ -300,7 +305,7 @@ async function play(g, lock) {
     if (!rom) throw new Error('This ROM is missing from storage. Delete it and add it again.');
     let sk = null, sk2 = null;
     if (lock) { sk = await DB.get('roms', S.lockId); sk2 = await DB.get('files', 'sk2chip'); if (!sk) throw new Error('The lock-on cartridge is missing.'); }
-    if (!wasmMod) { bootEl.textContent = 'Warming up the 68000…'; wasmMod = await WebAssembly.compile(await (await fetch('core/genesis_plus_gx_libretro.wasm')).arrayBuffer()); bootEl.textContent = 'Slotting cartridge…'; }
+    if (!wasmMod) { bootMsg('Warming up the 68000…'); wasmMod = await WebAssembly.compile(await (await fetch('core/genesis_plus_gx_libretro.wasm')).arrayBuffer()); bootMsg('Slotting cartridge…'); }
     const cv = document.createElement('canvas'); cv.id = 'cv'; $('#screen').prepend(cv);
     const M = await EJS_Runtime({
       noInitialRun: true, canvas: cv, parent: $('#screen'), callbacks: {}, arguments: [], preRun: [], postRun: [],
@@ -347,7 +352,7 @@ async function play(g, lock) {
     clearInterval(Emu.fpsT); Emu.fpsT = setInterval(fpsTick, 1000);
     toast(lock ? 'Locked onto Sonic & Knuckles' : 'Ready');
   } catch (e) {
-    bootEl.innerHTML = `<div><p>${esc(e.message || e)}</p><button class="btn red" id="bootBack">Back to library</button></div>`;
+    bootEl.innerHTML = BOOT_LOGO + `<div><p>${esc(e.message || e)}</p><button class="btn red" id="bootBack">Back to library</button></div>`;
     $('#bootBack').onclick = () => quit(true);
   }
 }

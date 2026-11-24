@@ -6,7 +6,7 @@
 <title>Hyperdrive</title>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icons/icon-180.png">
-<link rel="icon" href="icons/icon-192.png">
+<link rel="icon" href="icons/icon-32.png" sizes="32x32">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -39,10 +39,13 @@ button{cursor:pointer;border:0;background:none;padding:0}
 #lib{min-height:100%;padding:calc(var(--sat) + 10px) max(16px,var(--sar)) calc(var(--sab) + 40px) max(16px,var(--sal));
 background:repeating-linear-gradient(0deg,transparent 0 5px,rgba(255,255,255,.018) 5px 6px),radial-gradient(120% 60% at 50% -10%,#24242a 0,var(--bg) 60%)}
 .bar{display:flex;align-items:center;gap:10px;max-width:1240px;margin:0 auto;padding:8px 0 18px}
-.mark{display:flex;align-items:center;gap:10px;margin-right:auto;overflow:hidden}
-.mark svg{width:44px;height:28px}
-.mark b{font:400 clamp(20px,5.2vw,34px)/1 "Russo One",sans-serif;letter-spacing:.02em;background:linear-gradient(#fff 0 48%,#c9c9cf 52% 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
-.mark small{display:block;font-size:12px;color:var(--gold);font-weight:600;margin-top:2px}
+.mark{display:flex;align-items:center;gap:12px;margin-right:auto;overflow:hidden}
+.mark .mi{width:48px;height:48px;flex:none;border-radius:11px;box-shadow:0 0 0 1px #25252a,0 6px 16px rgba(0,0,0,.5)}
+.mark .mw{display:flex;flex-direction:column;gap:5px;min-width:0}
+.mark b{font:700 clamp(19px,5.4vw,27px)/1 "Chakra Petch",sans-serif;letter-spacing:.13em;color:#f1f0ec;white-space:nowrap}
+.mark .rule{display:flex;align-items:center;gap:8px}
+.mark .rule i{width:40px;height:5px;background:var(--gold);clip-path:polygon(7% 0,100% 0,93% 100%,0 100%);flex:none}
+.mark small{font:600 11px/1 "Chakra Petch",sans-serif;letter-spacing:.14em;color:var(--dim);white-space:nowrap}
 .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:0 16px;border-radius:12px;background:var(--plastic2);border:1px solid var(--edge);font-weight:600;white-space:nowrap}
 .btn.red{background:var(--red);border-color:#ff5c5c;color:#fff;box-shadow:0 4px 0 #9d1414}
 .btn.red:active{transform:translateY(2px);box-shadow:0 2px 0 #9d1414}
@@ -54,7 +57,10 @@ background:repeating-linear-gradient(0deg,transparent 0 5px,rgba(255,255,255,.01
 .cont{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:20px;align-items:center;margin-bottom:28px;padding:18px;border-radius:20px;
 background:linear-gradient(135deg,#1c1c20,#121214);border:1px solid var(--edge);position:relative;overflow:hidden}
 .cont::after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(115deg,transparent 0 22px,rgba(255,43,43,.06) 22px 26px);pointer-events:none;mask:linear-gradient(90deg,transparent 40%,#000)}
-@media(max-width:600px){.cont{grid-template-columns:minmax(0,1fr)}.mark small{display:none}}
+@media(max-width:600px){.cont{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:520px){.addb{width:44px;padding:0}.addb span{display:none}.bar{gap:8px}}
+@media(max-width:400px){.mark{gap:10px}.mark .mi{width:42px;height:42px}.mark b{font-size:20px;letter-spacing:.1em}.mark small{font-size:9.5px;letter-spacing:.1em}.mark .rule i{width:28px}}
+@media(max-width:340px){.mark small{display:none}.mark .rule i{width:56px}}
 .cont .shot{aspect-ratio:4/3;border-radius:10px;overflow:hidden;background:#000;border:3px solid #050506;box-shadow:0 10px 30px rgba(0,0,0,.6)}
 .cont .shot img{width:100%;height:100%;object-fit:cover;image-rendering:pixelated;display:block}
 .cont h2{font-size:clamp(24px,4vw,34px);line-height:1.05;margin:4px 0 6px;text-wrap:balance}
@@ -147,7 +153,16 @@ input[type=range]{width:150px;accent-color:var(--red);min-height:38px}
 .tb em{position:absolute;bottom:-2px;right:2px;font:700 10px/1 "Chakra Petch";font-style:normal;color:var(--gold)}
 #screen{position:relative;width:100%;aspect-ratio:4/3;max-height:62vh;margin:0 auto;background:#000}
 #screen canvas{position:absolute;inset:0;width:100%;height:100%;display:block;image-rendering:pixelated}
-#boot{position:absolute;inset:0;display:grid;place-items:center;color:var(--dim);font-weight:600;text-align:center;padding:20px}
+#boot{position:absolute;inset:0;display:grid;place-items:center;align-content:center;gap:14px;color:var(--dim);font-weight:600;text-align:center;padding:20px;background:#0c0c0e}
+#boot .bl{width:min(34%,140px);height:auto;overflow:visible}
+#boot .bl .h{animation:hIn .5s cubic-bezier(.2,.8,.2,1) both}
+#boot .bl .tr rect{animation:trIn .7s cubic-bezier(.2,.8,.2,1) both,trPulse 1.4s ease-in-out .9s infinite}
+#boot .bl .tr rect:nth-child(2){animation-delay:.08s,1s}#boot .bl .tr rect:nth-child(3){animation-delay:.16s,1.1s}
+#boot p{margin:0;font-size:14px;letter-spacing:.04em}
+@keyframes hIn{from{transform:translateX(22px);opacity:0}}
+@keyframes trIn{from{transform:translateX(40px);opacity:0}}
+@keyframes trPulse{50%{transform:translateX(-5px);opacity:.55}}
+@media(prefers-reduced-motion:reduce){#boot .bl *{animation:none!important}}
 #toast{position:absolute;left:50%;top:12px;transform:translateX(-50%);background:rgba(12,12,14,.88);border:1px solid #333;padding:6px 14px;border-radius:20px;font-weight:600;font-size:14px;pointer-events:none;opacity:0;transition:opacity .2s;white-space:nowrap;z-index:5}
 #toast.on{opacity:1}
 #rw{position:absolute;inset:0;pointer-events:none;box-shadow:inset 0 0 0 3px var(--gold);opacity:0}
@@ -198,14 +213,21 @@ background:radial-gradient(circle at 40% 30%,#3a3a40,#16161a 70%);box-shadow:ins
 </head>
 <body>
 
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<pattern id="hdRibs" width="4" height="4" patternUnits="userSpaceOnUse"><rect width="4" height="4" fill="#121214"/><rect y="3" width="4" height="1" fill="#18181c"/></pattern>
+<symbol id="hdIcon" viewBox="0 0 100 100"><rect width="100" height="100" rx="22" fill="url(#hdRibs)"/>
+<g transform="translate(52 50) skewX(-12) translate(-50 -50)"><path d="M29 22h17v23h12V22h17v56H58V57H46v21H29z" fill="#ff2b2b"/><path d="M29 22h17v2.5H29zM58 22h17v2.5H58z" fill="#ff7070"/>
+<rect x="20" y="58.5" width="62" height="2" fill="#121214"/><rect x="20" y="64.5" width="62" height="3" fill="#121214"/><rect x="20" y="71.5" width="62" height="4" fill="#121214"/></g>
+<g fill="#ff2b2b"><rect x="8" y="61" width="14" height="3" rx="1.5"/><rect x="4" y="68" width="16" height="3.5" rx="1.75"/><rect x="10" y="75.5" width="9" height="2.5" rx="1.25"/></g></symbol>
+</defs></svg>
 <main id="lib">
   <header class="bar">
-    <div class="mark" aria-label="Hyperdrive">
-      <svg viewBox="0 0 44 28" aria-hidden="true"><path d="M2 22h14M6 16h14M10 10h14" stroke="#ff2b2b" stroke-width="3.5" stroke-linecap="round"/><path d="M22 4h18l-6 20H16z" fill="#e9b949"/><path d="M26 9h9l-3 10h-9z" fill="#0c0c0e"/></svg>
-      <div><b>HYPERDRIVE</b><small>Genesis · Mega Drive</small></div>
+    <div class="mark" role="img" aria-label="Hyperdrive">
+      <svg class="mi" viewBox="0 0 100 100" aria-hidden="true"><use href="#hdIcon"/></svg>
+      <div class="mw"><b>HYPERDRIVE</b><span class="rule"><i></i><small>GENESIS · MEGA DRIVE</small></span></div>
     </div>
     <button class="btn ghost icon" id="setBtn" aria-label="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
-    <label class="btn red" for="pick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>Add ROMs</label>
+    <label class="btn red addb" for="pick" aria-label="Add ROMs"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg><span>Add ROMs</span></label>
     <input type="file" id="pick" multiple accept=".md,.bin,.gen,.smd,.68k,.zip" class="hide">
   </header>
   <div class="wrap" id="libBody"></div>
@@ -221,7 +243,7 @@ background:radial-gradient(circle at 40% 30%,#3a3a40,#16161a 70%);box-shadow:ins
     <button class="tb" id="bQs" aria-label="Quick save"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 3h11l3 3v15H5z"/><path d="M8 3v5h7V3M8 21v-7h8v7"/></svg></button>
     <button class="tb" id="bQl" aria-label="Quick load"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg></button>
   </div>
-  <div id="screen"><div id="boot">Slotting cartridge…</div><div id="rw"></div><div id="toast"></div><div id="fps" class="hide"></div></div>
+  <div id="screen"><div id="boot"></div><div id="rw"></div><div id="toast"></div><div id="fps" class="hide"></div></div>
   <div id="pad">
     <div class="ctl" id="dpad" data-k="dpad"><div class="base"></div><div class="cross"><i></i><i></i><b class="u"></b><b class="d"></b><b class="l"></b><b class="r"></b></div></div>
     <div class="ctl" id="face" data-k="face">
