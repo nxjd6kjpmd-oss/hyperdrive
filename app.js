@@ -3,7 +3,6 @@
 const $ = s => document.querySelector(s);
 const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const sleep = ms => new Promise(r => setTimeout(r, ms));
-const SHADERS = {"scanlines": {"glsl": "#if defined(VERTEX)\n#if __VERSION__ >= 130\n#define V out\n#define A in\n#else\n#define V varying\n#define A attribute\n#endif\nA vec4 VertexCoord; A vec4 TexCoord; V vec2 uv;\nuniform mat4 MVPMatrix;\nvoid main(){ gl_Position = MVPMatrix * VertexCoord; uv = TexCoord.xy; }\n#elif defined(FRAGMENT)\n#ifdef GL_ES\nprecision highp float;\n#endif\n#if __VERSION__ >= 130\n#define V in\n#define T texture\nout vec4 FragColor;\n#else\n#define V varying\n#define T texture2D\n#define FragColor gl_FragColor\n#endif\nuniform vec2 OutputSize; uniform vec2 TextureSize; uniform vec2 InputSize;\nuniform sampler2D Texture; V vec2 uv;\n\nvoid main(){\n  vec3 c = T(Texture, uv).rgb;\n  float y = uv.y * TextureSize.y;\n  float l = 0.5-0.5*cos(6.2831853*y);\n  c *= mix(0.62, 1.08, l);\n  FragColor = vec4(c, 1.0);\n}\n#endif\n", "linear": false, "scale": "viewport"}, "crt": {"glsl": "#if defined(VERTEX)\n#if __VERSION__ >= 130\n#define V out\n#define A in\n#else\n#define V varying\n#define A attribute\n#endif\nA vec4 VertexCoord; A vec4 TexCoord; V vec2 uv;\nuniform mat4 MVPMatrix;\nvoid main(){ gl_Position = MVPMatrix * VertexCoord; uv = TexCoord.xy; }\n#elif defined(FRAGMENT)\n#ifdef GL_ES\nprecision highp float;\n#endif\n#if __VERSION__ >= 130\n#define V in\n#define T texture\nout vec4 FragColor;\n#else\n#define V varying\n#define T texture2D\n#define FragColor gl_FragColor\n#endif\nuniform vec2 OutputSize; uniform vec2 TextureSize; uniform vec2 InputSize;\nuniform sampler2D Texture; V vec2 uv;\n\nvec2 warp(vec2 p){ p = p*2.0-1.0; p *= vec2(1.0+(p.y*p.y)*0.045, 1.0+(p.x*p.x)*0.06); return p*0.5+0.5; }\nvoid main(){\n  vec2 s = uv*TextureSize/InputSize;\n  vec2 w = warp(s);\n  if(w.x<0.0||w.y<0.0||w.x>1.0||w.y>1.0){ FragColor=vec4(0.0,0.0,0.0,1.0); return; }\n  vec2 t = w*InputSize/TextureSize;\n  vec2 px = vec2(0.6/TextureSize.x, 0.0);\n  vec3 c = T(Texture,t).rgb*0.6 + T(Texture,t-px).rgb*0.2 + T(Texture,t+px).rgb*0.2;\n  c = pow(c, vec3(2.2));\n  float y = t.y*TextureSize.y;\n  float l = 0.5-0.5*cos(6.2831853*y);\n  c *= mix(0.45, 1.25, l);\n  float m = mod(gl_FragCoord.x, 3.0);\n  vec3 mask = m<1.0 ? vec3(1.15,0.85,0.85) : (m<2.0 ? vec3(0.85,1.15,0.85) : vec3(0.85,0.85,1.15));\n  c *= mask;\n  vec2 v = w*(1.0-w.yx); float vig = pow(v.x*v.y*18.0, 0.22);\n  c = pow(c*vig, vec3(1.0/2.2));\n  FragColor = vec4(c*1.08, 1.0);\n}\n#endif\n", "linear": false, "scale": "viewport"}, "composite": {"glsl": "#if defined(VERTEX)\n#if __VERSION__ >= 130\n#define V out\n#define A in\n#else\n#define V varying\n#define A attribute\n#endif\nA vec4 VertexCoord; A vec4 TexCoord; V vec2 uv;\nuniform mat4 MVPMatrix;\nvoid main(){ gl_Position = MVPMatrix * VertexCoord; uv = TexCoord.xy; }\n#elif defined(FRAGMENT)\n#ifdef GL_ES\nprecision highp float;\n#endif\n#if __VERSION__ >= 130\n#define V in\n#define T texture\nout vec4 FragColor;\n#else\n#define V varying\n#define T texture2D\n#define FragColor gl_FragColor\n#endif\nuniform vec2 OutputSize; uniform vec2 TextureSize; uniform vec2 InputSize;\nuniform sampler2D Texture; V vec2 uv;\n\nvoid main(){\n  float dx = 1.0/TextureSize.x;\n  vec3 c = T(Texture,uv).rgb*0.5 + T(Texture,uv-vec2(dx,0.0)).rgb*0.25 + T(Texture,uv+vec2(dx,0.0)).rgb*0.25;\n  float y = uv.y*TextureSize.y;\n  c *= mix(0.88, 1.03, 0.5-0.5*cos(6.2831853*y));\n  FragColor = vec4(c, 1.0);\n}\n#endif\n", "linear": false, "scale": "viewport"}, "smooth": {"glsl": "#if defined(VERTEX)\n#if __VERSION__ >= 130\n#define V out\n#define A in\n#else\n#define V varying\n#define A attribute\n#endif\nA vec4 VertexCoord; A vec4 TexCoord; V vec2 uv;\nuniform mat4 MVPMatrix;\nvoid main(){ gl_Position = MVPMatrix * VertexCoord; uv = TexCoord.xy; }\n#elif defined(FRAGMENT)\n#ifdef GL_ES\nprecision highp float;\n#endif\n#if __VERSION__ >= 130\n#define V in\n#define T texture\nout vec4 FragColor;\n#else\n#define V varying\n#define T texture2D\n#define FragColor gl_FragColor\n#endif\nuniform vec2 OutputSize; uniform vec2 TextureSize; uniform vec2 InputSize;\nuniform sampler2D Texture; V vec2 uv;\n\nvoid main(){ FragColor = vec4(T(Texture, uv).rgb, 1.0); }\n#endif\n", "linear": true, "scale": "viewport"}};
 const CORE_DIR = 'Genesis Plus GX';
 const B = {B:0,Y:1,MODE:2,START:3,UP:4,DOWN:5,LEFT:6,RIGHT:7,C:8,Yg:9,X:10,Z:11};
 // Genesis button -> libretro index used by the core
@@ -270,87 +269,72 @@ const BOOT_LOGO = `<svg class="bl" viewBox="0 0 100 100" aria-hidden="true"><rec
 <rect x="20" y="58.5" width="62" height="2" fill="#121214"/><rect x="20" y="64.5" width="62" height="3" fill="#121214"/><rect x="20" y="71.5" width="62" height="4" fill="#121214"/></g></g>
 <g class="tr" fill="#ff2b2b"><rect x="8" y="61" width="14" height="3" rx="1.5"/><rect x="4" y="68" width="16" height="3.5" rx="1.75"/><rect x="10" y="75.5" width="9" height="2.5" rx="1.25"/></g></svg>`;
 const bootMsg = m => { const p = $('#bootMsg'); if (p) p.textContent = m; };
-let wasmMod = null;
-const Emu = {M: null, g: null, lock: false, fn: {}, paused: false, ff: false, rw: false, sramSig: '', timer: 0, romPath: ''};
+window.HDDebug = () => Emu;
+const ENGINE = 'hd2';
+const CORE_URL = 'core/hyperdrive-core.wasm';
+const Emu = {M: null, g: null, lock: false, paused: false, ff: false, rw: false, sramSig: '', timer: 0};
 const keyOf = () => Emu.g.id + (Emu.lock ? '-sk' : '');
-function cfgText() {
-  const rw = S.rewind === 'long' ? [64, 2] : S.rewind === 'off' ? [0, 0] : [32, 4];
-  return [
-    'savefile_directory = "/data/saves"', 'system_directory = "/system"', 'screenshot_directory = "/"', 'video_gpu_screenshot = false',
-    `audio_latency = ${S.audio === 'stable' ? 192 : 128}`, 'video_vsync = true', 'video_smooth = false', 'video_font_enable = false', 'input_joypad_driver = "null"',
-    'pause_nonactive = false', 'autosave_interval = 0', 'block_sram_overwrite = false', 'savestate_auto_save = false', 'savestate_auto_load = false',
-    `rewind_enable = ${S.rewind !== 'off'}`, ...(rw[0] ? [`rewind_buffer_size = "${rw[0]}"`, `rewind_granularity = "${rw[1]}"`] : []),
-    `fastforward_ratio = "${S.ffSpeed}"`, `audio_fastforward_mute = ${S.ffAudio === 'mute'}`, `audio_fastforward_speedup = ${S.ffAudio === 'fast'}`,
-    `video_scale_integer = ${!!S.integer}`, `input_libretro_device_p1 = "${S.pad === '6' ? 513 : S.pad === '3' ? 257 : 1}"`
-  ].join('\n') + '\n';
-}
-const coreOpts = () => ({
+const coreVars = () => ({
   genesis_plus_gx_system_hw: 'mega drive / genesis',
   genesis_plus_gx_region_detect: S.region,
   genesis_plus_gx_no_sprite_limit: S.sprites ? 'enabled' : 'disabled',
   genesis_plus_gx_lock_on: Emu.lock ? 'sonic & knuckles' : 'disabled',
   genesis_plus_gx_ym2612: S.chip
 });
-function mkdirp(FS, p) { let c = ''; for (const s of p.split('/').filter(Boolean)) { c += '/' + s; try { FS.mkdir(c); } catch (e) {} } }
+const padDevice = () => S.pad === '6' ? 513 : S.pad === '3' ? 257 : 1;
+let AC = null;
+function ensureAudio() {
+  try {
+    if (!AC) { const C = window.AudioContext || window.webkitAudioContext; if (C) { try { AC = new C({sampleRate: 44100, latencyHint: 'interactive'}); } catch (e) { AC = new C(); } } }
+    if (AC && AC.state !== 'running') AC.resume().catch(() => {});
+  } catch (e) {}
+  return AC;
+}
+function applyEngineSettings() {
+  const M = Emu.M; if (!M) return;
+  M.video.setShader(S.shader); M.video.integer = !!S.integer; M.video.dirty = true;
+  M.ffSpeed = S.ffSpeed; M.ffAudio = S.ffAudio;
+  M.setLatency(S.audio === 'stable' ? 0.14 : 0.08);
+  M.setRewind(S.rewind !== 'off', S.rewind === 'long' ? 2 : 4, S.rewind === 'long' ? 64 : 32);
+}
 async function play(g, lock) {
   if (!g || Emu.M) return;
+  ensureAudio();
   closeSheet(true);
   $('#lib').classList.add('hide'); $('#play').classList.remove('hide');
   $('#ttl').textContent = g.name + (lock ? ' + S&K' : '');
   const bootEl = $('#boot'); bootEl.classList.remove('hide'); bootEl.innerHTML = BOOT_LOGO + '<p id="bootMsg">Slotting cartridge…</p>';
-  Emu.g = g; Emu.lock = !!lock; Emu.paused = false;
+  Emu.g = g; Emu.lock = !!lock; Emu.paused = false; Emu.ff = Emu.rw = false;
   layoutPad();
   try {
-    if (typeof EJS_Runtime !== 'function') throw new Error('The emulator core did not load.');
+    if (typeof HDEngine !== 'function') throw new Error('The emulator engine did not load.');
     const rom = await DB.get('roms', g.id);
     if (!rom) throw new Error('This ROM is missing from storage. Delete it and add it again.');
-    let sk = null, sk2 = null;
-    if (lock) { sk = await DB.get('roms', S.lockId); sk2 = await DB.get('files', 'sk2chip'); if (!sk) throw new Error('The lock-on cartridge is missing.'); }
-    if (!wasmMod) { bootMsg('Warming up the 68000…'); wasmMod = await WebAssembly.compile(await (await fetch('core/genesis_plus_gx_libretro.wasm')).arrayBuffer()); bootMsg('Slotting cartridge…'); }
+    const files = {};
+    if (lock) {
+      const sk = await DB.get('roms', S.lockId), sk2 = await DB.get('files', 'sk2chip');
+      if (!sk) throw new Error('The lock-on cartridge is missing.');
+      files['/system/sk.bin'] = sk; if (sk2) files['/system/sk2chip.bin'] = sk2;
+    }
+    bootMsg('Warming up the 68000…');
+    await HDEngine.compile(CORE_URL);
+    bootMsg('Slotting cartridge…');
     const cv = document.createElement('canvas'); cv.id = 'cv'; $('#screen').prepend(cv);
-    const M = await EJS_Runtime({
-      noInitialRun: true, canvas: cv, parent: $('#screen'), callbacks: {}, arguments: [], preRun: [], postRun: [],
-      print: () => {}, printErr: () => {},
-      instantiateWasm: (imports, done) => { WebAssembly.instantiate(wasmMod, imports).then(inst => done(inst, wasmMod)); return {}; },
-      getSavExt: () => '.srm'
-    });
-    Emu.M = M;
-    const c = (n, r, a) => M.cwrap(n, r, a);
-    Emu.fn = {
-      input: c('simulate_input', 'null', ['number', 'number', 'number']), loop: c('toggleMainLoop', 'null', ['number']),
-      stateInfo: c('save_state_info', 'string', []), loadState: c('load_state', 'number', ['string', 'number']),
-      shot: c('cmd_take_screenshot', '', []), setVar: c('ejs_set_variable', 'null', ['string', 'string']),
-      restart: c('system_restart', '', []), shader: c('shader_enable', 'null', ['number']),
-      savePath: c('save_file_path', 'string', []), saveFiles: c('cmd_savefiles', '', []), refreshSaves: c('refresh_save_files', 'null', []),
-      ff: c('toggle_fastforward', 'null', ['number']), ffRatio: c('set_ff_ratio', 'null', ['number']), rewind: c('toggle_rewind', 'null', ['number']),
-      kb: c('ejs_set_keyboard_enabled', 'null', ['number'])
-    };
-    const FS = M.FS;
-    ['/home/web_user/.config/retroarch', '/data/saves/' + CORE_DIR, '/system', '/shader'].forEach(p => mkdirp(FS, p));
-    FS.writeFile('/home/web_user/.config/retroarch/retroarch.cfg', cfgText());
-    M.callbacks.setupCoreSettingFile = p => { mkdirp(FS, p.split('/').slice(0, -1).join('/')); FS.writeFile(p, Object.entries(coreOpts()).map(([k, v]) => `${k} = "${v}"`).join('\n') + '\n'); };
-    if (sk) FS.writeFile('/system/sk.bin', sk);
-    if (sk2) FS.writeFile('/system/sk2chip.bin', sk2);
-    const base = 'g' + g.id + (lock ? '-sk' : '');
-    Emu.romPath = '/' + base + '.' + g.ext;
-    FS.writeFile(Emu.romPath, rom);
+    const M = new HDEngine(cv); Emu.M = M;
+    M.onError = e => { toast('The emulator stopped: ' + (e.message || e)); };
     const sram = await DB.get('sram', keyOf());
-    if (sram) FS.writeFile(`/data/saves/${CORE_DIR}/${base}.srm`, sram);
-    M.callMain([Emu.romPath]);
-    M.resumeMainLoop();
-    Emu.fn.kb(0);
-    Emu.fn.ffRatio(S.ffSpeed);
-    const sp = Emu.fn.savePath();
-    if (sram && sp && sp !== `/data/saves/${CORE_DIR}/${base}.srm`) { mkdirp(FS, sp.split('/').slice(0, -1).join('/')); FS.writeFile(sp, sram); Emu.fn.refreshSaves(); }
-    Emu.sramSig = sig(sram);
-    applyShader();
+    await M.boot({rom, path: '/g' + g.id + (lock ? '-sk' : '') + '.' + g.ext, files, vars: coreVars(), device: padDevice(), sram});
+    await M.startAudio(ensureAudio());
+    applyEngineSettings();
+    Emu.sramSig = sig(M.getSram());
+    if (Emu.paused) {} else M.start();
     bootEl.classList.add('hide');
     requestAnimationFrame(layoutPad);
     g.played = Date.now(); g.lastLock = !!lock; DB.put('games', g.id, g);
     Emu.timer = setInterval(syncSram, 10000);
-    Emu.rwOff = S.rewind === 'off';
-    Emu.fpsFn = c('get_current_frame_count', 'number', []); Emu.fpsLast = [Emu.fpsFn(), performance.now()];
+    Emu.fpsLast = [M.frames, performance.now()];
     clearInterval(Emu.fpsT); Emu.fpsT = setInterval(fpsTick, 1000);
+    Instr.attach();
     toast(lock ? 'Locked onto Sonic & Knuckles' : 'Ready');
   } catch (e) {
     bootEl.innerHTML = BOOT_LOGO + `<div><p>${esc(e.message || e)}</p><button class="btn red" id="bootBack">Back to library</button></div>`;
@@ -359,89 +343,64 @@ async function play(g, lock) {
 }
 const sig = d => d ? d.length + ':' + Array.from({length: 64}, (_, i) => d[Math.floor(i * d.length / 64)]).join('.') + ':' + d.reduce((a, b, i) => (a + b * (i % 251 + 1)) | 0, 0) : '';
 async function syncSram() {
-  const M = Emu.M; if (!M || !Emu.g) return;
+  const M = Emu.M; if (!M || !Emu.g || !M.E) return;
   try {
-    Emu.fn.saveFiles();
-    const p = Emu.fn.savePath();
-    if (!p || !M.FS.analyzePath(p).exists) return;
-    const d = M.FS.readFile(p); const s = sig(d);
-    if (s !== Emu.sramSig) { Emu.sramSig = s; await DB.put('sram', keyOf(), d.slice()); }
+    const d = M.getSram(); if (!d) return;
+    const s = sig(d);
+    if (s !== Emu.sramSig) { Emu.sramSig = s; await DB.put('sram', keyOf(), d); }
   } catch (e) {}
 }
-async function grabShot() {
-  const M = Emu.M; if (!M) return null;
-  try { M.FS.unlink('/screenshot.png'); } catch (e) {}
-  try { Emu.fn.shot(); } catch (e) { return null; }
-  for (let i = 0; i < 30; i++) {
-    await sleep(40);
-    try { M.FS.stat('/screenshot.png'); await sleep(20); return new Blob([M.FS.readFile('/screenshot.png')], {type: 'image/png'}); } catch (e) {}
-  }
-  return null;
-}
+async function grabShot() { try { return Emu.M ? await Emu.M.screenshot() : null; } catch (e) { return null; } }
 async function quit(force) {
   const M = Emu.M, g = Emu.g;
   clearInterval(Emu.timer); clearInterval(Emu.fpsT); $('#fps').classList.add('hide');
   releaseAll();
-  if (M && !force) {
-    if (Emu.paused) { Emu.fn.loop(1); Emu.paused = false; await sleep(60); }
+  Instr.detach();
+  if (M && M.E && !force) {
     await syncSram();
     const shot = await grabShot();
     if (shot && g) { g.shot = shot; await DB.put('games', g.id, g); }
   }
-  if (M) { try { Emu.fn.loop(0); } catch (e) {} try { M.abort(); } catch (e) {} }
-  Emu.M = null; Emu.g = null; Emu.fn = {}; Emu.ff = Emu.rw = false;
+  if (M) { try { M.destroy(); } catch (e) {} }
+  Emu.M = null; Emu.g = null; Emu.ff = Emu.rw = false; Emu.paused = false;
   $('#cv')?.remove(); closeSheet(true); editMode(false);
   $('#play').classList.add('hide'); $('#lib').classList.remove('hide');
-  $('#bFf').classList.remove('on'); $('#rw').classList.remove('on');
+  $('#bFf').classList.remove('on'); $('#rw').classList.remove('on'); $('#bRw').classList.remove('on');
   renderLib();
 }
 function pause(on) {
   if (!Emu.M || Emu.paused === on) return;
   Emu.paused = on; releaseAll();
-  if (on) { setFF(false); setRW(false); }
-  try { Emu.fn.loop(on ? 0 : 1); } catch (e) {}
+  if (on) { setFF(false); setRW(false); Emu.M.stop(); }
+  else { ensureAudio(); Emu.M.start(); }
 }
-function applyShader() {
-  if (!Emu.M) return;
-  const FS = Emu.M.FS, k = S.shader, sh = SHADERS[k];
-  try { FS.unlink('/shader/shader.glslp'); } catch (e) {}
-  if (!sh) { Emu.fn.shader(0); return; }
-  FS.writeFile(`/shader/${k}.glsl`, sh.glsl);
-  FS.writeFile('/shader/shader.glslp', `shaders = 1\nshader0 = "${k}.glsl"\nfilter_linear0 = ${sh.linear}\nscale_type0 = viewport\n`);
-  Emu.fn.shader(1);
-}
-function audioKick() { try { const a = Emu.M?.AL?.currentCtx?.audioCtx; if (a && a.state !== 'running') a.resume(); } catch (e) {} }
+function audioKick() { if (Emu.M) ensureAudio(); }
 document.addEventListener('pointerdown', audioKick, true);
 document.addEventListener('keydown', audioKick, true);
 document.addEventListener('visibilitychange', () => {
   if (!Emu.M) return;
   if (document.hidden) { syncSram(); pause(true); }
-  else if (!$('#sheetHost').firstChild) pause(false);
+  else if (!$('#sheetHost').firstChild && !editing) pause(false);
 });
 window.addEventListener('pagehide', () => syncSram());
 
 function fpsTick() {
   const el = $('#fps');
   if (!Emu.M || !S.fps) { el.classList.add('hide'); return; }
-  try {
-    const f = Emu.fpsFn(), t = performance.now(), [f0, t0] = Emu.fpsLast; Emu.fpsLast = [f, t];
-    const v = Emu.paused ? 0 : (f - f0) * 1000 / (t - t0);
-    el.textContent = Emu.paused ? 'paused' : Math.round(v) + ' fps';
-    el.style.color = Emu.ff || v >= 58 ? '#5ed38a' : v >= 50 ? '#e9b949' : '#ff6b6b';
-    el.classList.remove('hide');
-  } catch (e) {}
+  const f = Emu.M.frames, t = performance.now(), [f0, t0] = Emu.fpsLast; Emu.fpsLast = [f, t];
+  const v = Emu.paused ? 0 : (f - f0) * 1000 / (t - t0);
+  el.textContent = Emu.paused ? 'paused' : Math.round(v) + ' fps';
+  el.style.color = Emu.ff || v >= 58 ? '#5ed38a' : v >= 50 ? '#e9b949' : '#ff6b6b';
+  el.classList.remove('hide');
 }
 
 /* ---------------- states ---------------- */
 async function saveState(slot) {
   if (!Emu.M) return;
   try {
-    const st = Emu.fn.stateInfo().split('|');
-    if (st[2] !== '1') throw new Error();
-    const data = Emu.M.HEAPU8.slice(+st[1], +st[1] + +st[0]);
-    const wasPaused = Emu.paused; if (wasPaused) Emu.fn.loop(1);
-    const png = await grabShot(); if (wasPaused) Emu.fn.loop(0);
-    await DB.put('states', keyOf() + ':' + slot, {data, png, t: Date.now()});
+    const data = Emu.M.saveState();
+    const png = await grabShot();
+    await DB.put('states', keyOf() + ':' + slot, {data, png, t: Date.now(), engine: ENGINE});
     toast(slot === 'q' ? 'Quick-saved' : `Saved to slot ${slot}`);
     return true;
   } catch (e) { toast('Could not save state'); }
@@ -450,16 +409,21 @@ async function loadState(slot) {
   if (!Emu.M) return;
   const s = await DB.get('states', keyOf() + ':' + slot);
   if (!s) { toast(slot === 'q' ? 'No quick save yet' : 'That slot is empty'); return; }
-  try { Emu.M.FS.unlink('/game.state'); } catch (e) {}
-  Emu.M.FS.writeFile('/game.state', s.data);
-  Emu.fn.loadState('game.state', 0);
+  if (s.engine !== ENGINE) { toast('That state is from the old engine and can’t be loaded'); return; }
+  if (!Emu.M.loadState(s.data)) { toast('Could not load that state'); return; }
   toast(slot === 'q' ? 'Quick-loaded' : `Loaded slot ${slot}`);
   return true;
 }
 
 /* ---------------- fast-forward / rewind ---------------- */
-function setFF(on) { if (!Emu.M || Emu.ff === on) return; Emu.ff = on; Emu.fn.ff(on ? 1 : 0); $('#bFf').classList.toggle('on', on); }
-function setRW(on) { if (!Emu.M || Emu.rw === on) return; if (on && Emu.rwOff) { toast('Rewind is off (Settings → Controls)'); return; } Emu.rw = on; Emu.fn.rewind(on ? 1 : 0); $('#rw').classList.toggle('on', on); $('#bRw').classList.toggle('on', on); }
+function setFF(on) { if (!Emu.M || Emu.ff === on) return; Emu.ff = on; Emu.M.ff = on; $('#bFf').classList.toggle('on', on); }
+function setRW(on) {
+  if (!Emu.M || Emu.rw === on) return;
+  if (on && S.rewind === 'off') { toast('Rewind is off (Menu → Controls → Performance)'); return; }
+  if (on && !Emu.M.setRW(true)) return;
+  if (!on) Emu.M.setRW(false);
+  Emu.rw = on; $('#rw').classList.toggle('on', on); $('#bRw').classList.toggle('on', on);
+}
 const ffLabel = () => { $('#ffx').textContent = S.ffSpeed + '×'; };
 ffLabel();
 function holdBtn(el, down, up) {
@@ -478,7 +442,7 @@ function press(src, idx, on) {
   let s = held.get(idx); if (!s) held.set(idx, s = new Set());
   const was = s.size > 0; on ? s.add(src) : s.delete(src);
   const now = s.size > 0;
-  if (now !== was && Emu.M && !Emu.paused) try { Emu.fn.input(0, idx, now ? 1 : 0); } catch (e) {}
+  if (now !== was && Emu.M) Emu.M.setButton(idx, now && !Emu.paused);
 }
 function releaseAll(prefix) {
   for (const [idx, s] of held) for (const src of [...s]) if (!prefix || src.startsWith(prefix)) press(src, idx, false);
@@ -576,7 +540,7 @@ $('#editReset').onclick = () => { S.layout[orient()] = {}; saveS(); layoutPad();
 /* ---------------- keyboard ---------------- */
 const KEYS = {ArrowUp: 4, KeyW: 4, ArrowDown: 5, KeyS: 5, ArrowLeft: 6, KeyA: 6, ArrowRight: 7, KeyD: 7, KeyJ: 1, KeyK: 0, KeyL: 8, KeyU: 10, KeyI: 9, KeyO: 11, Enter: 3, KeyM: 2};
 function onKey(e, down) {
-  if (!Emu.M || e.target.closest && e.target.closest('input,textarea')) return;
+  if (!Emu.M || e.target.closest && e.target.closest('input,textarea,select')) return;
   if (e.code === 'Escape' && down) { $('#sheetHost').firstChild ? closeSheet() : gameMenu(); return; }
   if ($('#sheetHost').firstChild) return;
   if (e.code in KEYS) { e.preventDefault(); if (!e.repeat) press('k', KEYS[e.code], down); return; }
@@ -633,9 +597,97 @@ document.addEventListener('dblclick', e => e.preventDefault(), {passive: false})
 let lastTouchEnd = 0;
 document.addEventListener('touchend', e => {
   const now = Date.now();
-  if (now - lastTouchEnd < 350 && !e.target.closest('input,select,textarea,label')) e.preventDefault();
+  if (now - lastTouchEnd < 350 && !e.target.closest('input,select,textarea,label,#ins,.sheet')) e.preventDefault();
   lastTouchEnd = now;
 }, {passive: false});
+
+/* ---------------- instruments drawer ---------------- */
+const Instr = (() => {
+  const B = window.HDBank;
+  let open = false, timer = 0, map = {}, sel = null, cat = 'Bass', key = null, lastN = -1;
+  const lit = new Map(), prevKeys = new Map();
+  const el = $('#ins'), list = $('#insList');
+  const hex = fp => (fp >>> 0).toString(16).padStart(8, '0');
+  const CH = m => [0, 1, 2, 3, 4, 5].filter(i => m & (1 << i)).map(i => 'FM' + (i + 1)).join(' · ');
+  const regsFor = e => e && e.preset && B.byId(e.preset) ? B.regs(B.byId(e.preset)) : e && e.regs ? Uint8Array.from(e.regs) : null;
+  const label = e => e ? (e.preset ? (B.byId(e.preset)?.name || 'Preset') : e.name || 'Game instrument') : '';
+  async function persist() { if (key) await DB.put('files', 'instr:' + key, map); }
+  async function attach() {
+    key = keyOf(); sel = null; lastN = -1; lit.clear(); prevKeys.clear();
+    map = (await DB.get('files', 'instr:' + key)) || {};
+    const M = Emu.M; if (!M || !M.E || !M.E.hd_instr_set) { $('#bIns').classList.add('hide'); return; }
+    $('#bIns').classList.remove('hide');
+    for (const [fp, e] of Object.entries(map)) { const r = regsFor(e); if (r) M.setInstrument(parseInt(fp, 16), r); }
+    M.E.hd_instr_enable(S.instrOn === false ? 0 : 1);
+    $('#insOn').setAttribute('aria-checked', String(S.instrOn !== false));
+  }
+  function detach() { show(false); key = null; }
+  function show(on) {
+    open = on; el.classList.toggle('hide', !on); $('#bIns').setAttribute('aria-expanded', String(on));
+    clearInterval(timer);
+    if (on) { lastN = -1; render(); timer = setInterval(poll, 120); }
+  }
+  function render() {
+    const M = Emu.M; if (!M) return;
+    const all = M.instruments(); lastN = all.length;
+    const swapped = all.filter(x => map[hex(x.fp)]).length;
+    $('#insSub').textContent = all.length ? `${all.length} heard so far${swapped ? ` · ${swapped} swapped` : ''}` : 'Listening…';
+    if (!all.length) { list.innerHTML = '<p class="iempty">Play some music — each FM instrument shows up here the first time the game uses it. Drums, voices and the PSG beeps aren’t FM, so they don’t appear.</p>'; return; }
+    list.innerHTML = all.map((x, i) => {
+      const k = hex(x.fp), e = map[k], isOpen = sel === k;
+      let pick = '';
+      if (isOpen) {
+        const cats = [...B.CATS, 'This game'];
+        const items = cat === 'This game'
+          ? all.filter(y => y.fp !== x.fp).map((y) => [`g:${hex(y.fp)}`, `Instrument ${all.indexOf(y) + 1}`, e && e.src === hex(y.fp)])
+          : B.PRESETS.filter(p => p.cat === cat).map(p => [`p:${p.id}`, p.name, e && e.preset === p.id]);
+        pick = `<div class="pick"><div class="cats" role="group">${cats.map(c => `<button data-cat="${esc(c)}" aria-pressed="${c === cat}">${esc(c)}</button>`).join('')}</div>
+          <div class="pgrid">${items.length ? items.map(([v, n, on]) => `<button data-use="${esc(v)}" aria-pressed="${!!on}">${esc(n)}</button>`).join('') : '<p class="iempty" style="padding:8px">No other instruments heard yet.</p>'}</div>
+          ${e ? `<button class="btn rst" data-restore="${k}">Restore the original</button>` : ''}</div>`;
+      }
+      return `<div class="irow${isOpen ? ' open' : ''}" data-fp="${k}"><button data-sel="${k}" aria-expanded="${isOpen}"><span class="lt${lit.get(k) > performance.now() ? ' on' : ''}" data-lt="${k}"></span>
+        <span class="nm"><b>Instrument ${i + 1}</b><small data-sub="${k}">${esc(CH(x.ch))} · algorithm ${x.regs[28] & 7} · ${x.keyons} notes</small></span>
+        ${e ? `<span class="swp">${esc(label(e))}</span>` : ''}</button>${pick}</div>`;
+    }).join('');
+  }
+  function poll() {
+    const M = Emu.M; if (!M || !open) return;
+    const all = M.instruments(), now = performance.now();
+    if (all.length !== lastN) { all.forEach(x => prevKeys.set(hex(x.fp), x.keyons)); render(); return; }
+    for (const x of all) {
+      const k = hex(x.fp), p = prevKeys.get(k);
+      if (p !== undefined && x.keyons > p) lit.set(k, now + 140);
+      prevKeys.set(k, x.keyons);
+      const l = list.querySelector(`[data-lt="${k}"]`); if (l) l.classList.toggle('on', (lit.get(k) || 0) > now);
+      const sub = list.querySelector(`[data-sub="${k}"]`); if (sub) sub.textContent = `${CH(x.ch)} · algorithm ${x.regs[28] & 7} · ${x.keyons} notes`;
+    }
+  }
+  list.addEventListener('click', async e => {
+    const M = Emu.M; if (!M) return;
+    const c = e.target.closest('[data-cat]'); if (c) { cat = c.dataset.cat; render(); return; }
+    const u = e.target.closest('[data-use]');
+    if (u && sel) {
+      const [kind, v] = u.dataset.use.split(':');
+      let entry, r;
+      if (kind === 'p') { entry = {preset: v}; r = regsFor(entry); }
+      else { const src = M.instruments().find(y => hex(y.fp) === v); if (!src) return; r = B.normalize(src.regs); entry = {regs: [...r], name: `Instrument ${M.instruments().indexOf(src) + 1}`, src: v}; }
+      M.setInstrument(parseInt(sel, 16), r); map[sel] = entry; await persist(); render();
+      toast(`${label(entry)} — plays from the next note`); return;
+    }
+    const rs = e.target.closest('[data-restore]');
+    if (rs) { M.clearInstrument(parseInt(rs.dataset.restore, 16)); delete map[rs.dataset.restore]; await persist(); render(); toast('Original instrument back'); return; }
+    const sl = e.target.closest('[data-sel]'); if (sl) { sel = sel === sl.dataset.sel ? null : sl.dataset.sel; render(); }
+  });
+  $('#insX').onclick = () => show(false);
+  $('#bIns').onclick = () => show(!open);
+  $('#insOn').onclick = () => {
+    S.instrOn = S.instrOn === false; saveS();
+    $('#insOn').setAttribute('aria-checked', String(S.instrOn));
+    if (Emu.M) Emu.M.E.hd_instr_enable(S.instrOn ? 1 : 0);
+    toast(S.instrOn ? 'Swaps on' : 'Swaps off — original instruments');
+  };
+  return {attach, detach, show, get open() { return open; }};
+})();
 
 /* ---------------- toast ---------------- */
 let toastT = 0;
@@ -653,11 +705,11 @@ const restartNote = '<small>Takes effect when the game next starts</small>';
 function displayHTML(inGame) {
   return `<div class="field"><div class="lb">Filter<small>${{sharp: 'Crisp pixels, no processing', smooth: 'Soft bilinear scaling', scanlines: 'Dark gaps between lines, like a TV', crt: 'Curved tube, scanlines, RGB mask', composite: 'Blends dithering into fake transparency (Sonic waterfalls)'}[S.shader]}</small></div></div>
     ${seg('shader', [['sharp', 'Sharp'], ['smooth', 'Smooth'], ['scanlines', 'Scanlines'], ['crt', 'CRT'], ['composite', 'Composite']])}
-    <div class="field"><div class="lb">Integer scaling<small>Whole-number pixel sizes, so no uneven pixels. ${inGame ? 'Applies on restart' : ''}</small></div>${tog('integer')}</div>`;
+    <div class="field"><div class="lb">Integer scaling<small>Whole-number pixel heights, so no uneven rows.</small></div>${tog('integer')}</div>`;
 }
 function controlsHTML(inGame) {
   return `<div class="sec">Controller</div>
-    <div class="field"><div class="lb">Pad type<small>6-button for X/Y/Z games. Auto suits most. ${inGame ? 'Applies on restart' : ''}</small></div>${seg('pad', [['auto', 'Auto'], ['3', '3-btn'], ['6', '6-btn']])}</div>
+    <div class="field"><div class="lb">Pad type<small>6-button for X/Y/Z games. Auto suits most.</small></div>${seg('pad', [['auto', 'Auto'], ['3', '3-btn'], ['6', '6-btn']])}</div>
     <div class="sec">Touch controls</div>
     <div class="field"><label for="rs">Size</label><input type="range" id="rs" min=".7" max="1.4" step=".05" value="${S.size}" data-range="size"></div>
     <div class="field"><label for="ro">Opacity</label><input type="range" id="ro" min=".2" max="1" step=".05" value="${S.opacity}" data-range="opacity"></div>
@@ -667,8 +719,8 @@ function controlsHTML(inGame) {
     <div class="field"><div class="lb">Fast-forward speed</div>${seg('ffSpeed', [[2, '2×'], [4, '4×'], [8, '8×']])}</div>
     <div class="field"><div class="lb">Sound while fast</div>${seg('ffAudio', [['mute', 'Mute'], ['fast', 'Sped up']])}</div>
     <div class="sec">Performance</div>
-    <div class="field"><div class="lb">Rewind<small>Rewind saves snapshots as you play, which costs speed on older phones. Off is smoothest. ${inGame ? 'Applies on restart' : ''}</small></div>${seg('rewind', [['off', 'Off'], ['std', 'Standard'], ['long', 'Extended']])}</div>
-    <div class="field"><div class="lb">Audio buffer<small>Stable trades a little sound delay for fewer crackles and hitches. ${inGame ? 'Applies on restart' : ''}</small></div>${seg('audio', [['normal', 'Normal'], ['stable', 'Stable']])}</div>
+    <div class="field"><div class="lb">Rewind<small>Rewind saves snapshots as you play, which costs speed on older phones. Off is smoothest.</small></div>${seg('rewind', [['off', 'Off'], ['std', 'Standard'], ['long', 'Extended']])}</div>
+    <div class="field"><div class="lb">Audio buffer<small>Stable trades a little sound delay for fewer crackles and hitches.</small></div>${seg('audio', [['normal', 'Normal'], ['stable', 'Stable']])}</div>
     <div class="field"><div class="lb">Show speed meter<small>Frames per second, bottom-left of the screen. 60 is full speed.</small></div>${tog('fps')}</div>
     <div class="sec">Gamepad (Xbox layout) — tap a button, then press it on the controller</div>
     <div class="map" id="map"></div>
@@ -714,22 +766,24 @@ function bindSettings(el, inGame, rerender) {
     if (s) {
       const k = s.dataset.set; let v = s.dataset.v; if (k === 'ffSpeed') v = +v;
       S[k] = v; saveS();
-      if (k === 'shader') applyShader();
-      if (k === 'ffSpeed') { Emu.M && Emu.fn.ffRatio(v); ffLabel(); }
-      if (k === 'chip') { if (Emu.M) Emu.fn.setVar('genesis_plus_gx_ym2612', v); if (CHIPS.find(c => c[0] === v)?.[3]) toast('Accurate chip on — watch for stutter'); }
-      if (k === 'region' && Emu.M) { Emu.fn.setVar('genesis_plus_gx_region_detect', v); Emu.fn.restart(); toast('Console reset for new region'); }
+      if (['shader', 'integer', 'ffSpeed', 'ffAudio', 'audio', 'rewind'].includes(k)) applyEngineSettings();
+      if (k === 'pad' && Emu.M) Emu.M.E.retro_set_controller_port_device(0, padDevice());
+      if (k === 'ffSpeed') ffLabel();
+      if (k === 'chip') { if (Emu.M) Emu.M.setVar('genesis_plus_gx_ym2612', v); if (CHIPS.find(c => c[0] === v)?.[3]) toast('Accurate chip on — watch for stutter'); }
+      if (k === 'region' && Emu.M) { Emu.M.setVar('genesis_plus_gx_region_detect', v); Emu.M.reset(); toast('Console reset for new region'); }
       rerender();
     }
     const t = e.target.closest('[data-tog]');
     if (t) {
       const k = t.dataset.tog; S[k] = !S[k]; saveS();
-      if (k === 'sprites' && Emu.M) Emu.fn.setVar('genesis_plus_gx_no_sprite_limit', S.sprites ? 'enabled' : 'disabled');
+      if (k === 'sprites' && Emu.M) Emu.M.setVar('genesis_plus_gx_no_sprite_limit', S.sprites ? 'enabled' : 'disabled');
+      if (k === 'integer') applyEngineSettings();
       rerender();
     }
     const mp = e.target.closest('[data-map]'); if (mp) { waitMap = +mp.dataset.map; renderMap(); }
     const a = e.target.closest('[data-act]')?.dataset.act;
     if (a === 'edit') { sheetClose = null; closeSheet(true); editMode(true); }
-    if (a === 'reset') { Emu.fn.restart(); closeSheet(); toast('Console reset'); }
+    if (a === 'reset') { Emu.M.reset(); closeSheet(); toast('Console reset'); }
     if (a === 'quit') { sheetClose = null; closeSheet(true); quit(); }
     if (a === 'restart') { const g = Emu.g, l = Emu.lock; sheetClose = null; closeSheet(true); await quit(); play(g, l); }
   });
@@ -765,7 +819,7 @@ async function gameMenu() {
     const q = await DB.get('states', k + ':q');
     body = `<p class="sub">Quick save: ${q ? esc(ago(q.t)) : 'empty'} — use the top-bar buttons. Saving over a used slot needs a second tap.</p>
       <div class="slots">${rows.map(([i, s]) => `<div class="slot"><div class="th" ${s && s.png ? `style="background-image:url(${blobUrl(s.png)})"` : ''}>${s ? '' : 'Empty'}</div>
-      <div class="in"><b>Slot ${i}</b><span>${s ? esc(ago(s.t)) : ''}</span><div class="acts"><button data-sv="${i}" ${s ? 'data-used="1"' : ''}>Save</button><button data-ld="${i}" ${s ? '' : 'disabled'}>Load</button></div></div></div>`).join('')}</div>`;
+      <div class="in"><b>Slot ${i}</b><span>${s ? (s.engine === ENGINE ? esc(ago(s.t)) : 'Old engine') : ''}</span><div class="acts"><button data-sv="${i}" ${s ? 'data-used="1"' : ''}>Save</button><button data-ld="${i}" ${s && s.engine === ENGINE ? '' : 'disabled'}>Load</button></div></div></div>`).join('')}</div>`;
   } else body = gameTab === 'display' ? displayHTML(true) : gameTab === 'controls' ? controlsHTML(true) : systemHTML(true);
   const el = sheet(`<h3>${esc(Emu.g.name)}${Emu.lock ? ' + S&amp;K' : ''}</h3><p class="sub">Paused</p>
     <div class="tabs" role="tablist">${tabs.map(([k, l]) => `<button role="tab" data-tab="${k}" aria-selected="${k === gameTab}">${l}</button>`).join('')}</div><div>${body}</div>
