@@ -356,6 +356,14 @@ class Engine {
   setInstrument(fp, regs) { new Uint8Array(this.mem.buffer, this.E.hd_instr_buf(), 30).set(regs); return !!this.E.hd_instr_set(fp >>> 0); }
   clearInstrument(fp) { this.E.hd_instr_clear(fp >>> 0); }
   clearInstruments() { this.E.hd_instr_clear_all(); }
+  /* ----- 68000 work RAM ($FF0000-$FFFFFF), stored as little-endian words ----- */
+  ram() { const p = this.E.retro_get_memory_data(2), n = this.E.retro_get_memory_size(2); return p && n ? new Uint8Array(this.mem.buffer, p, n) : null; }
+  r8(a) { const r = this.ram(); return r ? r[(a & 0xFFFF) ^ 1] : 0; }
+  w8(a, v) { const r = this.ram(); if (r) r[(a & 0xFFFF) ^ 1] = v & 0xFF; }
+  r16(a) { const r = this.ram(); a &= 0xFFFE; return r ? r[a] | (r[a + 1] << 8) : 0; }
+  w16(a, v) { const r = this.ram(); a &= 0xFFFE; if (r) { r[a] = v & 0xFF; r[a + 1] = (v >> 8) & 0xFF; } }
+  r32(a) { return ((this.r16(a) << 16) | this.r16(a + 2)) >>> 0; }
+  w32(a, v) { this.w16(a, (v >>> 16) & 0xFFFF); this.w16(a + 2, v & 0xFFFF); }
   /* ----- misc ----- */
   async screenshot() {
     if (!this.last) return null;

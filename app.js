@@ -334,6 +334,7 @@ async function play(g, lock) {
     Emu.timer = setInterval(syncSram, 10000);
     Emu.fpsLast = [M.frames, performance.now()];
     clearInterval(Emu.fpsT); Emu.fpsT = setInterval(fpsTick, 1000);
+    Codes.attach([files['/system/sk.bin'], rom]);
     Instr.attach();
     toast(lock ? 'Locked onto Sonic & Knuckles' : 'Ready');
   } catch (e) {
@@ -443,6 +444,7 @@ function press(src, idx, on) {
   const was = s.size > 0; on ? s.add(src) : s.delete(src);
   const now = s.size > 0;
   if (now !== was && Emu.M) Emu.M.setButton(idx, now && !Emu.paused);
+  if (now && !was && Emu.M) Codes.input(idx);
 }
 function releaseAll(prefix) {
   for (const [idx, s] of held) for (const src of [...s]) if (!prefix || src.startsWith(prefix)) press(src, idx, false);
@@ -600,6 +602,53 @@ document.addEventListener('touchend', e => {
   if (now - lastTouchEnd < 350 && !e.target.closest('input,select,textarea,label,#ins,.sheet')) e.preventDefault();
   lastTouchEnd = now;
 }, {passive: false});
+
+/* ---------------- secret codes: Konami code = shield (Sonic 3 / S&K / S3&K) ---------------- */
+const Codes = (() => {
+  const KONAMI = [4, 4, 5, 5, 6, 7, 6, 7, 0, 1];          // up up down down left right left right B A
+  const SHIELDS = {4: 'Fire Shield', 5: 'Lightning Shield', 6: 'Bubble Shield'};
+  // zone id -> shield bit, by the hazards each zone throws at you
+  const ZONE = {0: 4, 1: 6, 2: 4, 3: 5, 4: 5, 5: 5, 6: 6, 7: 5, 8: 5, 9: 4, 10: 5, 11: 5};
+  const RAM = {player: 0xFFB000, gameMode: 0xFFF600, zone: 0xFFFE10, superFlag: 0xFFFE19};
+  let seq = [], shield = null;
+  // 68000 code the game's monitors run: bset #0,$2B(a1) / bset #b,$2B(a1) / move.l #Obj,(Shield).w / move.w a1,(Shield+parent).w
+  function scan(bytes) {
+    const found = {};
+    const lim = Math.min(bytes.length, 0x400000) - 24;
+    for (let i = 0; i < lim; i += 2) {
+      if (bytes[i] !== 0x08 || bytes[i + 1] !== 0xE9 || bytes[i + 2] || bytes[i + 3] || bytes[i + 4] || bytes[i + 5] !== 0x2B) continue;
+      if (bytes[i + 6] !== 0x08 || bytes[i + 7] !== 0xE9 || bytes[i + 8] || bytes[i + 10] || bytes[i + 11] !== 0x2B) continue;
+      const bit = bytes[i + 9]; if (!SHIELDS[bit] || found[bit]) continue;
+      if (bytes[i + 12] !== 0x21 || bytes[i + 13] !== 0xFC || bytes[i + 20] !== 0x31 || bytes[i + 21] !== 0xC9) continue;
+      const obj = ((bytes[i + 14] << 24) | (bytes[i + 15] << 16) | (bytes[i + 16] << 8) | bytes[i + 17]) >>> 0;
+      const slot = 0xFF0000 | (bytes[i + 18] << 8) | bytes[i + 19], parent = 0xFF0000 | (bytes[i + 22] << 8) | bytes[i + 23];
+      found[bit] = {obj, slot, parent};
+    }
+    return found[4] && found[5] && found[6] ? found : null;
+  }
+  const plain = d => { const {h} = headerView(d); if (h.length === d.length) return d;
+    const n = Math.floor((d.length - 512) / 16384), out = new Uint8Array(n * 16384);
+    for (let b = 0; b < n; b++) { const blk = d.subarray(512 + b * 16384, 512 + (b + 1) * 16384); for (let i = 0; i < 8192; i++) { out[b * 16384 + i * 2 + 1] = blk[i]; out[b * 16384 + i * 2] = blk[i + 8192]; } }
+    return out; };
+  function attach(roms) { seq = []; shield = null; for (const r of roms) { if (r && (shield = scan(plain(r)))) break; } }
+  function give() {
+    const M = Emu.M; if (!M || !shield) return;
+    if (M.r8(RAM.gameMode) !== 0x0C || !M.r32(RAM.player) || M.r8(RAM.player + 5) !== 2) { toast('Shields only work while you’re in a level'); return; }
+    if (M.r8(RAM.superFlag)) { toast('You’re already super'); return; }
+    const underwater = M.r8(RAM.player + 0x2A) & 0x40;
+    const bit = underwater ? 6 : (ZONE[M.r8(RAM.zone)] ?? 5), s = shield[bit];
+    M.w8(RAM.player + 0x2B, (M.r8(RAM.player + 0x2B) & 0x8E) | 1 | (1 << bit));
+    M.w32(s.slot, s.obj);
+    M.w16(s.parent, RAM.player & 0xFFFF);
+    toast(SHIELDS[bit]);
+  }
+  function input(idx) {
+    if (!shield) return;
+    seq.push(idx); if (seq.length > KONAMI.length) seq.shift();
+    if (seq.length === KONAMI.length && seq.every((v, i) => v === KONAMI[i])) { seq = []; give(); }
+  }
+  return {attach, input};
+})();
 
 /* ---------------- instruments drawer ---------------- */
 const Instr = (() => {
